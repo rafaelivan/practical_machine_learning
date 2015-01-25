@@ -1,0 +1,150 @@
+# Practical Machine Learning
+
+This report describes my solution to the course project of the Practical Machine Learning course offered by Johns Hopkins Bloomberg School of Public Health through Coursera.
+
+The step-by-step solution is coded in the `Project.r` file, inside the `source` directory. This report highlights and explains the most important aspects of the developed program.
+
+## Introduction
+
+> *Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).*
+
+## Data exploration
+
+Both training and testing datasets are downloaded to the *dataset* directory. I started exploring the data in order to have a better understanding of what is available to build the prediction model, and to check if it is necessary to clean the data before proceeding.
+
+```r
+trainData <- read.csv('dataset/pml-training.csv')
+View(trainData)
+str(trainData)
+summary(trainData)
+```
+
+I realized that many entries of the dataset have bad values, such as `NA`, `''` (empty string) and `'#DIV/0!'` (excel division error).
+
+
+## Data cleaning
+
+I decided to consider a feature set of variables for which all cases have meaningful values.
+
+So, I reloaded the data from the CSV files, this time using the `na.strings` option of the `read.csv` function to convert bad values into `NA`, making it easier to remove all columns containing at least one `NA` value.
+
+```r
+naStrings <- c(NA, '', '#DIV/0!')
+trainData <- read.csv('dataset/pml-training.csv', na.strings = naStrings)
+testData <- read.csv('dataset/pml-testing.csv', na.strings = naStrings)
+```
+
+Doing so, the dataset is reduced from 160 variables to only 60. It is important to notice that the majority of the removed columns are mostly blank, which means that they would not contribute much to the prediction algorithm anyway.
+
+Looking into the remaining data, the following variables does not seem to be relevant as well and were also removed:
+
+- X (index column)
+- user_name
+- raw_timestamp_part_1
+- raw_timestamp_part_2
+- cvtd_timestamp
+- new_window
+- num_window
+
+I defined the `sanitizeData` function, which performs the two steps described above:
+
+1. Removes the seven irrelevant columns (variables);
+2. Removes all variables that have at least one case with `NA` value.
+
+```r
+sanitizeData <- function(data) {
+  rejectedCols <- c('X', 'user_name', 'raw_timestamp_part_1', 'raw_timestamp_part_2',
+                    'cvtd_timestamp', 'new_window', 'num_window')
+  
+  data <- data[, -which(names(data) %in% rejectedCols)]
+  return (data[, colSums(is.na(data)) == 0])
+}
+
+trainData <- sanitizeData(trainData)
+testData <- sanitizeData(testData)
+```
+
+All of these transformation were applied to both training e testing data.
+
+## Building the cross validation set
+
+Now with a clean dataset, I partitioned the current training set into a new training set and a cross validation set.
+
+- Training set: 60% of the training data;
+- Cross validation set: 40% of the training data.
+
+The data was partitioned by the `classe` variable, in order to both sets to include examples of all classes.
+
+```r
+inTrain <- createDataPartition(trainData$classe, p = 0.6, list = F)
+validationData <- trainData[-inTrain,]
+trainData <- trainData[inTrain,]
+```
+
+## Modeling
+
+I chose the Ramdom Forest method to approach the problem.
+
+```r
+modelFit <- train(trainData$classe ~ ., data = trainData, method = 'rf')
+```
+
+It took about 40 minutes to fit the model on my 13-inch Macbook Pro (2.5 GHz Intel Core i5, 10GB RAM).
+
+## Prediction on the cross validation set
+
+The cross validation set was used to validated the Random Forest model trained in the previous step.
+
+```r
+predictions <- predict(modelFit, validationData)
+predictions <- as.data.frame(predictions)
+predictions$correct <- validationData$classe
+```
+
+## Results
+
+Now we can use the confusion matrix to check some statistics.
+
+```r
+confusionMatrix(predictions$predictions, predictions$correct)
+```
+
+```r
+Confusion Matrix and Statistics
+
+          Reference
+Prediction    A    B    C    D    E
+         A 2228    9    0    0    0
+         B    2 1509    4    0    4
+         C    2    0 1359   21    6
+         D    0    0    5 1264    3
+         E    0    0    0    1 1429
+
+Overall Statistics
+                                          
+               Accuracy : 0.9927          
+                 95% CI : (0.9906, 0.9945)
+    No Information Rate : 0.2845          
+    P-Value [Acc > NIR] : < 2.2e-16       
+                                          
+                  Kappa : 0.9908          
+ Mcnemar's Test P-Value : NA              
+
+Statistics by Class:
+
+                     Class: A Class: B Class: C Class: D Class: E
+Sensitivity            0.9982   0.9941   0.9934   0.9829   0.9910
+Specificity            0.9984   0.9984   0.9955   0.9988   0.9998
+Pos Pred Value         0.9960   0.9934   0.9791   0.9937   0.9993
+Neg Pred Value         0.9993   0.9986   0.9986   0.9967   0.9980
+Prevalence             0.2845   0.1935   0.1744   0.1639   0.1838
+Detection Rate         0.2840   0.1923   0.1732   0.1611   0.1821
+Detection Prevalence   0.2851   0.1936   0.1769   0.1621   0.1823
+Balanced Accuracy      0.9983   0.9962   0.9945   0.9908   0.9954
+```
+
+It is estimated that the out of sample error is reflected by the Kappa statistic.
+
+## Conclusion
+
+The Random Forest model had a satisfactory accuracy predicting classes of human activity based on data from accelerometers measurements. The data sanitization process performed before the model fitting and prediction appears to be effective, removing irrelevant and dirty data as long as keeping the key features for the predictor to work well.
