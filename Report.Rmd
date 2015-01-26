@@ -1,8 +1,8 @@
 # Practical Machine Learning
 
-This report describes my solution to the course project of the Practical Machine Learning course offered by Johns Hopkins Bloomberg School of Public Health through Coursera.
+This report describes my solution to the course project of the Practical Machine Learning class offered by Johns Hopkins Bloomberg School of Public Health through Coursera.
 
-The step-by-step solution is coded in the `Project.r` file, inside the `source` directory. This report highlights and explains the most important aspects of the developed program.
+The step-by-step solution is coded in the `Project.R` file, inside the `source` directory. This report highlights and explains the most important aspects of the developed program.
 
 ## Introduction
 
@@ -36,7 +36,7 @@ testData <- read.csv('dataset/pml-testing.csv', na.strings = naStrings)
 
 Doing so, the dataset is reduced from 160 variables to only 60. It is important to notice that the majority of the removed columns are mostly blank, which means that they would not contribute much to the prediction algorithm anyway.
 
-Looking into the remaining data, the following variables does not seem to be relevant as well and were also removed:
+Looking into the remaining data, the following seven variables does not seem to be relevant as well and were also removed:
 
 - X (index column)
 - user_name
@@ -55,16 +55,13 @@ I defined the `sanitizeData` function, which performs the two steps described ab
 sanitizeData <- function(data) {
   rejectedCols <- c('X', 'user_name', 'raw_timestamp_part_1', 'raw_timestamp_part_2',
                     'cvtd_timestamp', 'new_window', 'num_window')
-  
+
   data <- data[, -which(names(data) %in% rejectedCols)]
   return (data[, colSums(is.na(data)) == 0])
 }
 
 trainData <- sanitizeData(trainData)
-testData <- sanitizeData(testData)
 ```
-
-All of these transformation were applied to both training e testing data.
 
 ## Building the cross validation set
 
@@ -89,7 +86,7 @@ I chose the Ramdom Forest method to approach the problem.
 modelFit <- train(trainData$classe ~ ., data = trainData, method = 'rf')
 ```
 
-It took about 40 minutes to fit the model on my 13-inch Macbook Pro (2.5 GHz Intel Core i5, 10GB RAM).
+It took several minutes to fit the model on my 13-inch Macbook Pro (2.5 GHz Intel Core i5, 10GB RAM).
 
 ## Prediction on the cross validation set
 
@@ -121,14 +118,14 @@ Prediction    A    B    C    D    E
          E    0    0    0    1 1429
 
 Overall Statistics
-                                          
-               Accuracy : 0.9927          
+
+               Accuracy : 0.9927
                  95% CI : (0.9906, 0.9945)
-    No Information Rate : 0.2845          
-    P-Value [Acc > NIR] : < 2.2e-16       
-                                          
-                  Kappa : 0.9908          
- Mcnemar's Test P-Value : NA              
+    No Information Rate : 0.2845
+    P-Value [Acc > NIR] : < 2.2e-16
+
+                  Kappa : 0.9908
+ Mcnemar's Test P-Value : NA
 
 Statistics by Class:
 
@@ -147,4 +144,4 @@ It is estimated that the out of sample error is reflected by the Kappa statistic
 
 ## Conclusion
 
-The Random Forest model had a satisfactory accuracy predicting classes of human activity based on data from accelerometers measurements. The data sanitization process performed before the model fitting and prediction appears to be effective, removing irrelevant and dirty data as long as keeping the key features for the predictor to work well.
+The Random Forest model had a very good accuracy predicting classes of human activity based on data from accelerometers measurements. The data sanitization process performed before the model fitting and prediction appears to be effective, removing irrelevant and dirty data as long as keeping the key features for the predictor to work well.

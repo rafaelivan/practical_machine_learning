@@ -63,8 +63,8 @@ img {
 
 <div id="practical-machine-learning" class="section level1">
 <h1>Practical Machine Learning</h1>
-<p>This report describes my solution to the course project of the Practical Machine Learning course offered by Johns Hopkins Bloomberg School of Public Health through Coursera.</p>
-<p>The step-by-step solution is coded in the <code>Project.r</code> file, inside the <code>source</code> directory. This report highlights and explains the most important aspects of the developed program.</p>
+<p>This report describes my solution to the course project of the Practical Machine Learning class offered by Johns Hopkins Bloomberg School of Public Health through Coursera.</p>
+<p>The step-by-step solution is coded in the <code>Project.R</code> file, inside the <code>source</code> directory. This report highlights and explains the most important aspects of the developed program.</p>
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
 <blockquote>
@@ -88,7 +88,7 @@ summary(trainData)</code></pre>
 trainData &lt;- read.csv('dataset/pml-training.csv', na.strings = naStrings)
 testData &lt;- read.csv('dataset/pml-testing.csv', na.strings = naStrings)</code></pre>
 <p>Doing so, the dataset is reduced from 160 variables to only 60. It is important to notice that the majority of the removed columns are mostly blank, which means that they would not contribute much to the prediction algorithm anyway.</p>
-<p>Looking into the remaining data, the following variables does not seem to be relevant as well and were also removed:</p>
+<p>Looking into the remaining data, the following seven variables does not seem to be relevant as well and were also removed:</p>
 <ul>
 <li>X (index column)</li>
 <li>user_name</li>
@@ -106,14 +106,12 @@ testData &lt;- read.csv('dataset/pml-testing.csv', na.strings = naStrings)</code
 <pre class="r"><code>sanitizeData &lt;- function(data) {
   rejectedCols &lt;- c('X', 'user_name', 'raw_timestamp_part_1', 'raw_timestamp_part_2',
                     'cvtd_timestamp', 'new_window', 'num_window')
-  
+
   data &lt;- data[, -which(names(data) %in% rejectedCols)]
   return (data[, colSums(is.na(data)) == 0])
 }
 
-trainData &lt;- sanitizeData(trainData)
-testData &lt;- sanitizeData(testData)</code></pre>
-<p>All of these transformation were applied to both training e testing data.</p>
+trainData &lt;- sanitizeData(trainData)</code></pre>
 </div>
 <div id="building-the-cross-validation-set" class="section level2">
 <h2>Building the cross validation set</h2>
@@ -131,7 +129,7 @@ trainData &lt;- trainData[inTrain,]</code></pre>
 <h2>Modeling</h2>
 <p>I chose the Ramdom Forest method to approach the problem.</p>
 <pre class="r"><code>modelFit &lt;- train(trainData$classe ~ ., data = trainData, method = 'rf')</code></pre>
-<p>It took about 40 minutes to fit the model on my 13-inch Macbook Pro (2.5 GHz Intel Core i5, 10GB RAM).</p>
+<p>It took several minutes to fit the model on my 13-inch Macbook Pro (2.5 GHz Intel Core i5, 10GB RAM).</p>
 </div>
 <div id="prediction-on-the-cross-validation-set" class="section level2">
 <h2>Prediction on the cross validation set</h2>
@@ -155,14 +153,14 @@ Prediction    A    B    C    D    E
          E    0    0    0    1 1429
 
 Overall Statistics
-                                          
-               Accuracy : 0.9927          
+
+               Accuracy : 0.9927
                  95% CI : (0.9906, 0.9945)
-    No Information Rate : 0.2845          
-    P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
-                                          
-                  Kappa : 0.9908          
- Mcnemar's Test P-Value : NA              
+    No Information Rate : 0.2845
+    P-Value [Acc &gt; NIR] : &lt; 2.2e-16
+
+                  Kappa : 0.9908
+ Mcnemar's Test P-Value : NA
 
 Statistics by Class:
 
@@ -179,7 +177,7 @@ Balanced Accuracy      0.9983   0.9962   0.9945   0.9908   0.9954</code></pre>
 </div>
 <div id="conclusion" class="section level2">
 <h2>Conclusion</h2>
-<p>The Random Forest model had a satisfactory accuracy predicting classes of human activity based on data from accelerometers measurements. The data sanitization process performed before the model fitting and prediction appears to be effective, removing irrelevant and dirty data as long as keeping the key features for the predictor to work well.</p>
+<p>The Random Forest model had a very good accuracy predicting classes of human activity based on data from accelerometers measurements. The data sanitization process performed before the model fitting and prediction appears to be effective, removing irrelevant and dirty data as long as keeping the key features for the predictor to work well.</p>
 </div>
 </div>
 
